@@ -16,7 +16,13 @@ class GetSystemTime(SimProcedure):
         wordsize: int = DATA_TYPES["Windows"]["WORD"]
 
         for word in ['wYear', 'wMonth', 'wDayOfWeek', 'wDay']:
-            self.state.memory.store(start, claripy.BVS(word, wordsize*8))
+            word_symbol = claripy.BVS(word, wordsize*8)
+            self.state.memory.store(
+                start, word_symbol, endness=self.project.arch.memory_endness)
+            self.state.globals[word] = word_symbol
+
             start += wordsize
-        from IPython import embeds
+
+        self.state.solver.add(self.state.globals['wDay'] <= 31)
+        from IPython import embed
         return
