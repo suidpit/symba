@@ -26,7 +26,11 @@ int checktime()
 	SYSTEMTIME x;
 	GetSystemTime(&x);
 	printf("Current day is %d", x.wDay);
-	if ((x.wDay == 20))
+
+	x.wDay += 4;
+	x.wDay *= 3;
+
+	if ((x.wDay == 21))
 	{
 		return 1;
 	}
