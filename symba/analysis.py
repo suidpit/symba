@@ -1,3 +1,5 @@
+from triggers import *
+
 import logging
 import sys
 
@@ -12,8 +14,6 @@ class Symba(object):
     def __init__(self, executable, auto_load_libs=True):
         self._auto_load_libs = auto_load_libs
         self.executable = executable
-        # l.basicConfig(format='TEST:', level=logging.INFO)
-
         l.info("Loading executable inside analysis engine...")
         # TODO: check how auto load libs impacts loader mapping behaviour
         self.project = angr.Project(executable, load_options={
@@ -34,9 +34,12 @@ class Symba(object):
 
         Arguments:
             trigger_api {string} -- A list of symbols representing trigger sources.
+
+        Returns:
+            list -- A List of addresses pointing to precedessor states.
         """
         found = False
-        rets = []
+        addrs = []
         for symbol in trigger_api:
             if self.project.loader.find_symbol(symbol):
                 l.info(
@@ -50,16 +53,32 @@ class Symba(object):
                 if function.name in trigger_api:
                     l.info(
                         f"0x{address:x} -> {function}\n  Import DLL: {function.binary_name}")
-                    predecessor = next(iter(cfg.functions.callgraph.predecessors(
+                    predecessors = next(iter(cfg.functions.callgraph.predecessors(
                         address)))
-                    l.info(f"Called from function at 0x{predecessor:x}")
-                    rets.append(predecessor)
-        return rets
+                    l.info(f"Called from function at 0x{predecessors:x}")
+                    addrs.append(predecessors)
+
+        return [self.project.factory.block(addr) for addr in addrs]
+
+    def track(self, triggers: list):
+        blocks = self.find_triggers(triggers)
+        for block, trigger in zip(blocks, triggers):
+            if trigger in globals():
+                # ! UGLY, UGLY, UGLY way to handle this
+                self.project.hook_symbol(trigger, globals()[trigger]())
+                self._follow(block.addr)
+
+    def _follow(self, addr):
+        state = self.project.factory.blank_state(addr=addr)
+        sm = self.project.factory.simulation_manager(state)
+
+        embed()
 
 
 symba = Symba(
     "/home/symba/dev/symba/resources/pocs/simple_date_console/bin/simple_date_console.exe")
+
 symba.print_map()
-trigger_calls = symba.find_triggers(
+
+symba.track(
     ["GetSystemTime", "GetSystemTimeAsFileTime"])
-embed()
