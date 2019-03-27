@@ -349,3 +349,9 @@ healthchecksdb
 MigrationBackup/
 
 # End of https://www.gitignore.io/api/visualstudio
+
+
+# Author Integrations
+
+## VSCODE ##
+.vscode
