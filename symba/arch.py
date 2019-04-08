@@ -1,6 +1,18 @@
-"""Metadata concerning different architectures and OSes.
+"""Info dictionaries to store architecture-dependent values
+in object-like fashion.
 """
 
 
-DATA_TYPES = {
-    "Windows": {"WORD": 2}}
+class Win32(dict):
+    def __init__(self):
+        # ? Is there any better way to initialize this dictionary?
+        types = {'WORD': 2}
+        self.update(**types)
+
+        super.__init__()
+
+    def __getattr__(self, type):
+        if type in self:
+            return self[type]
+        else:
+            raise AttributeError(f"No such data type: {type}")

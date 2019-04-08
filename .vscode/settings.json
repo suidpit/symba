@@ -1,0 +1,9 @@
+{
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true,
+    "python.pythonPath": "/home/symba/.virtualenvs/symba_angr_dev/bin/python",
+    "python.linting.pylintPath": "/home/symba/.virtualenvs/symba_angr_dev/bin/pylint",
+    "code-runner.executorMap": {
+        "python": "/home/symba/.virtualenvs/symba_angr_dev/bin/python"
+    },
+}

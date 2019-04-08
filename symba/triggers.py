@@ -1,28 +1,39 @@
+import typing
 
-from arch import DATA_TYPES
-
-from angr import SimProcedure
-import claripy
-
-################################
-#   GetSystemTime
-################################
+from symba.types import FunctionModel
 
 
-class GetSystemTime(SimProcedure):
+malware_source_config = []
 
-    def run(self, lpSystemTime):
-        start = lpSystemTime
-        wordsize: int = DATA_TYPES["Windows"]["WORD"]
 
-        for word in ['wYear', 'wMonth', 'wDayOfWeek', 'wDay']:
-            word_symbol = claripy.BVS(word, wordsize*8)
-            self.state.memory.store(
-                start, word_symbol, endness=self.project.arch.memory_endness)
-            self.state.globals[word] = word_symbol
+class TriggerSource(object):
+    """
+    Base class for trigger-condition sources.
+    """
 
-            start += wordsize
+    def __init__(self, symbol: str, model: FunctionModel):
+        self._symbol = symbol
+        self._model = model
 
-        self.state.solver.add(self.state.globals['wDay'] <= 31)
-        from IPython import embed
-        return
+    @property
+    def model(self):
+        return self._model
+
+    @property
+    def symbol(self):
+        return self._symbol
+
+
+# * Right now, functionality is not implemented. Default configuration remains malware.
+
+
+def register_source(config: str):
+    """ Registers a new TriggerSource into malware config sources.
+    """
+    def wrapper(func):
+        if config == "malware":
+            sim_proc = func()
+            malware_source_config.append(
+                TriggerSource(sim_proc.__class__.__name__, sim_proc))
+        return func
+    return wrapper
