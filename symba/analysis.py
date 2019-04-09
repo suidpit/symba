@@ -1,85 +1,131 @@
 import logging
+from typing import List, Dict
 
-from angr import Project
+from angr import Project, SimState
 from angr.analyses.cfg.cfg import CFG
 
-from symba.types import *
 from symba.triggers import TriggerSource, malware_source_config
 from symba.procedures import GetSystemTime
 
 
 class Symba(object):
-    def __init__(self, binary: Path, angr_options: Options = {'auto_load_libs': False}):
+    def __init__(self, binary: str, angr_options: dict = {'auto_load_libs': False}):
         self._binary = binary
         self._angr_options = angr_options
 
         self._init_logging()
         self._init_angr_project()
 
+        # The first time I generate a CFG, I save it for performance purpose.
+        self.cfg = None
         self.triggers = []
 
     def _init_logging(self):
-        # TODO: specify log format
-        pass
+        self.l = logging.getLogger("symba.analysis")
 
     def _init_angr_project(self):
         self.project = Project(
             self._binary, load_options=self._angr_options)
 
-    def _register_trigger(self, trigger: TriggerSource):
-        self.triggers.append(trigger)
-        self.project.hook_symbol(trigger.symbol, trigger.model)
+    def _register_triggers(self, config):
+        # TODO: Just a placeholder for future
+        if "malware" in config:
+            for source in malware_source_config:
+                #! Fixing a strange bug in decorator which returns a tuple instead of class
+                source.model = source.model[0]
+                self.triggers.append(source)
 
-    def find_calling_points(self, symbols: Symbols = [], cfg_options: Options = {'show_progressbar': True}) -> CallingPoints:
+    def find_calling_points(self, symbols: List[str] = [], cfg_options: dict = {'show_progressbar': True}) -> List[Dict[str, int]]:
         """For each symbol in input - or for every symbol, if no specified - retrieves addresses of basic blocks
         calling that symbol.
         Several techniques can be used to obtain the former. At the moment, the function generates a static CFG starting
         from the executable and it uses it to determine predecessors.
 
         Keyword Arguments:
-            symbols {Symbols} -- a list of symbols strings (default: {[]})
-            cfg_options {Options} -- Options passed to the CFG generation in angr (default: {{'show_progressbar': True}})
+            symbols {List[str]} -- a list of symbols strings, e.g. 'strncmp', 'printf', 'GetSystemTime' (default: {[]})
+            cfg_options {dict} -- Options passed to the CFG generation in angr (default: {{'show_progressbar': True}})
 
         Returns:
-            CallingPoints -- A mapping of {Symbol: Calling Block address} to retrieve functions' predecessors
+            call_points -- A mapping {symbol : address of predecessor calling block}
         """
 
-        rets: CallingPoints = {}
+        call_points = {}
         try:
             # TODO: encapsulate different techniques to find callpoints, CFG may be not enough
-            cfg: CFG = self.project.analyses.CFG(**cfg_options)
-            for address, function in cfg.functions.items():
+            # CFG is generated just one time for every find_calling_points call.
+            if not self.cfg:
+                self.cfg: CFG = self.project.analyses.CFG(**cfg_options)
+            for address, function in self.cfg.functions.items():
                 try:
                     if function.name in symbols or not symbols:
                         pred = next(
-                            iter(cfg.functions.callgraph.predecessors(address))
+                            iter(self.cfg.functions.callgraph.predecessors(address))
                         )
-                        rets[function.name] = pred
+                        call_points[function.name] = pred
                 except StopIteration:
                     # some nodes won't have predecessors - obv - do not panic.
                     pass
         except Exception as e:
-            # TODO: logging must not be here
-            l: logging.Logger = logging.getLogger("symba_analysis")
-            l.log(logging.ERROR, f"{e}")
-        return rets
+            self.l.log(logging.ERROR, f"{e}")
+        return call_points
 
-    def analyse(self, triggers=[]):
-        """Handles the executable analysis, extracting trigger conditions.
-        If no triggers are specified, Symba will load a default configuration
+    def track_variable(self, trigger: TriggerSource):
+        """The current core of the analysis. Taints and tracks, in the context of a symbolic execution,
+        values produced by the specified trigger source, recognizing states reached by constraining
+        them, adding them to the TriggerSource object. In the future it should be able to combine triggers,
+        use different techniques for exploration, and provide different termination criteria. Right now, it doesn't.
+
+        Arguments:
+            trigger {TriggerSource} -- Trigger Source to extract condition from.
+        """
+
+        # Which block is calling this function?
+        res = self.find_calling_points([trigger.symbol])
+
+        # Replace Win32 Library with our function summary.
+        self.project.hook_symbol(trigger.symbol, trigger.model)
+
+        # I am assuming just one starting block, for now.
+        call_addr = res[trigger.symbol]
+        b = self.project.factory.block(addr=call_addr)
+        # Set symbolic execution start to block calling trigger symbol
+        start_state = self.project.factory.entry_state(addr=b.addr)
+        # Initialize a simulation manager. For now, no technique is used.
+        sm = self.project.factory.simulation_manager(start_state)
+
+        # The only termination criterion, right now, is -- up to the end.
+        sm.run()
+
+        for state in sm.deadended:
+            if self.is_triggered(trigger, state):
+                trigger.states.append(state)
+
+    def is_triggered(self, trigger, state):
+        """Returns True if state is dependent on a trigger condition,
+        False otherwise.
+        """
+        # * Right now, this is obtained by scanning the list
+        # * of constraints looking for injected symbols appearing there.
+        for constraint in state.solver.constraints:
+            if any(not symbol.variables.isdisjoint(constraint.variables) for symbol in state.globals['GetSystemTime'].values()):
+                return True
+        return False
+
+    def analyse(self, source_configs: List[str] = ["malware"]):
+        """Handles the executable analysis pipeline, starts variable tracking,
+        and extracts from symbolic states trigger conditions passed from configuration.
+        If no configuration is specified, Symba will load a default configuration
         with Trigger Sources typically found in malware analysis.
 
         Keyword Arguments:
-            triggers {Sources} - - A list of TriggerSource objects to direct analysis (default: {[]})
+            source_configs {List[str]} - - A list of TriggerSource objects to direct analysis (default: {["malware"]})
         """
 
-        if not triggers:
-            # TODO: load triggers from a dedicated module here instead of creating them here
-            for source in malware_source_config:
-                self._register_trigger(source)
+        self._register_triggers(source_configs)
+        for trigger in self.triggers:
+            # * How to handle multiple triggers in the same symbolic execution reusing work already done?
+            self.track_variable(trigger)
+            trigger.extract_conditions
 
-        syms = [t.symbol for t in self.triggers]
-        points = self.find_calling_points(symbols=syms)
-
-        for a, f in points:
-            print(f"{a:X} -> {f}")
+        self.l.log(
+            logging.INFO, f"Analysis is complete, Symba is ready to export.")

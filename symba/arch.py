@@ -5,11 +5,11 @@ in object-like fashion.
 
 class Win32(dict):
     def __init__(self):
-        # ? Is there any better way to initialize this dictionary?
+        # ? Is there any better way to initialize this dictionary? Probably, yep.
         types = {'WORD': 2}
         self.update(**types)
 
-        super.__init__()
+        super().__init__()
 
     def __getattr__(self, type):
         if type in self:
