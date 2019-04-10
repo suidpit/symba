@@ -38,4 +38,6 @@ class GetSystemTime(SimProcedure):
             self.state.globals['GetSystemTime'][word] = word_symbol
             start += wordsize
 
+        #! There's no constraint on validity of fields --> e.g. day can be higher than 31, and so on
+
         return

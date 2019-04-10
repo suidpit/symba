@@ -97,19 +97,8 @@ class Symba(object):
         sm.run()
 
         for state in sm.deadended:
-            if self.is_triggered(trigger, state):
+            if trigger.is_triggered(state):
                 trigger.states.append(state)
-
-    def is_triggered(self, trigger, state):
-        """Returns True if state is dependent on a trigger condition,
-        False otherwise.
-        """
-        # * Right now, this is obtained by scanning the list
-        # * of constraints looking for injected symbols appearing there.
-        for constraint in state.solver.constraints:
-            if any(not symbol.variables.isdisjoint(constraint.variables) for symbol in state.globals['GetSystemTime'].values()):
-                return True
-        return False
 
     def analyse(self, source_configs: List[str] = ["malware"]):
         """Handles the executable analysis pipeline, starts variable tracking,
@@ -123,9 +112,7 @@ class Symba(object):
 
         self._register_triggers(source_configs)
         for trigger in self.triggers:
-            # * How to handle multiple triggers in the same symbolic execution reusing work already done?
+            # ? How to handle multiple triggers in the same symbolic execution reusing work already done?
             self.track_variable(trigger)
-            trigger.extract_conditions
-
-        self.l.log(
-            logging.INFO, f"Analysis is complete, Symba is ready to export.")
+            # Extract trigger conditions solving and comparing constraints into trigger states
+            trigger.load_conditions()
