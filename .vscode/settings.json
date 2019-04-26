@@ -6,4 +6,5 @@
     "code-runner.executorMap": {
         "python": "/home/symba/.virtualenvs/symba_angr_dev/bin/python"
     },
+    "C_Cpp.errorSquiggles": "Disabled",
 }
