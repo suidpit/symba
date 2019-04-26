@@ -6,6 +6,7 @@ from angr.analyses.cfg.cfg import CFG
 
 from symba.triggers import TriggerSource, malware_source_config
 from symba.procedures import GetSystemTime
+from symba.exploration import TriggerSeer
 
 
 class Symba(object):
@@ -94,9 +95,12 @@ class Symba(object):
         sm = self.project.factory.simulation_manager(start_state)
 
         # The only termination criterion, right now, is -- up to the end.
+        # TODO: Implement an exploration technique to stop exploration after trigger conditions have been triggered.
+        sm.use_technique(TriggerSeer(count_threshold=30))
+
         sm.run()
 
-        for state in sm.deadended:
+        for state in sm.deadended + sm.active:
             if trigger.is_triggered(state):
                 trigger.states.append(state)
 
@@ -116,3 +120,7 @@ class Symba(object):
             self.track_variable(trigger)
             # Extract trigger conditions solving and comparing constraints into trigger states
             trigger.load_conditions()
+
+            # ! There shouldn't be duplicates -- just cleaning for demo here
+            print(set(frozenset(v[1].items())
+                      for v in trigger.conditions.items()))

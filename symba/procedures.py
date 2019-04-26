@@ -39,5 +39,11 @@ class GetSystemTime(SimProcedure):
             start += wordsize
 
         #! There's no constraint on validity of fields --> e.g. day can be higher than 31, and so on
-
+        # * Ugly way to fix things while symbol injection is not handled by a plugin
+        self.state.solver.add(
+            self.state.globals['GetSystemTime']['wMonth'] <= 12
+        )
+        self.state.solver.add(
+            self.state.globals['GetSystemTime']['wDay'] <= 31
+        )
         return
