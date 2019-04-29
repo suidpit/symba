@@ -12,6 +12,7 @@ class TriggerCondition(object):
     or context variable which can represent some triggering fact.
     """
 
+
 # ? Should this extend SimProcedure?
 
 
@@ -28,7 +29,8 @@ class TriggerSource(object):
         self._conditions = defaultdict(dict)
 
     def _is_constrained(self, bv: BV, state: SimState):
-        return any(not bv.variables.isdisjoint(constraint.variables) for constraint in state.solver.constraints)
+        return any(not bv.variables.isdisjoint(constraint.variables)
+                   for constraint in state.solver.constraints)
 
     def _get_constrained(self, state):
         # This rets must be a TriggerCondition or something like this.
@@ -48,7 +50,9 @@ class TriggerSource(object):
         """
         # * Right now, this is obtained by scanning the list
         # * of constraints looking for injected symbols appearing there.
-        return any(self._is_constrained(variable, state) for variable in state.globals[self.symbol].values())
+        return any(
+            self._is_constrained(variable, state)
+            for variable in state.globals[self.symbol].values())
 
     @property
     def states(self):
@@ -73,10 +77,12 @@ malware_source_config = []
 def register_source(config: str):
     """ Registers a new TriggerSource into malware config sources.
     """
+
     def wrapper(func):
         if config == "malware":
             sim_proc = func()
             malware_source_config.append(
                 TriggerSource(sim_proc.__class__.__name__, sim_proc))
         return sim_proc
+
     return wrapper
