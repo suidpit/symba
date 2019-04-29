@@ -14,7 +14,6 @@ from symba.arch import Win32
 #   https://docs.microsoft.com/en-us/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getsystemtime
 ################################
 
-
 @register_source("malware")
 class GetSystemTime(SimProcedure):
 
@@ -47,3 +46,21 @@ class GetSystemTime(SimProcedure):
             self.state.globals['GetSystemTime']['wDay'] <= 31
         )
         return
+
+@register_source('malware')
+class GetUsername(SimProcedure):
+    def __init__(self):
+        self.os_arch = Win32()
+        super().__init__()
+
+    def run(self, lpBuffer, pcbBuffer):
+        pass
+
+
+# TODO Functions in list:
+# GetUserName
+# Process32{First, Next}
+# GetModuleFileName
+# DeviceIoControl (for disk size)
+# GetDiskFreeSpaceExA
+# GetModuleHandle
