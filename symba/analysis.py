@@ -7,6 +7,7 @@ from angr.analyses.cfg.cfg import CFG
 from symba.triggers import TriggerSource, malware_source_config
 from symba.procedures import GetSystemTime
 from symba.exploration import TriggerSeer
+from symba.exceptions import SymbaMissingSource
 
 
 class Symba(object):
@@ -22,7 +23,7 @@ class Symba(object):
         self.triggers = []
 
     def _init_logging(self):
-        self.l = logging.getLogger("symba.analysis")
+        self.l: logging.Logger = logging.getLogger("symba.analysis")
 
     def _init_angr_project(self):
         self.project = Project(
@@ -57,6 +58,7 @@ class Symba(object):
             if not self.cfg:
                 self.cfg: CFG = self.project.analyses.CFG(**cfg_options)
             for address, function in self.cfg.functions.items():
+                self.l.debug((address, function.name))
                 try:
                     if function.name in symbols or not symbols:
                         pred = next(
@@ -82,6 +84,10 @@ class Symba(object):
 
         # Which block is calling this function?
         res = self.find_calling_points([trigger.symbol])
+
+        # If there is no calling point, the function won't be called in binary.
+        if not res:
+            raise SymbaMissingSource
 
         # Replace Win32 Library with our function summary.
         self.project.hook_symbol(trigger.symbol, trigger.model)
@@ -116,11 +122,14 @@ class Symba(object):
 
         self._register_triggers(source_configs)
         for trigger in self.triggers:
-            # ? How to handle multiple triggers in the same symbolic execution reusing work already done?
-            self.track_variable(trigger)
-            # Extract trigger conditions solving and comparing constraints into trigger states
-            trigger.load_conditions()
+            try:
+                # ? How to handle multiple triggers in the same symbolic execution reusing work already done?
+                self.track_variable(trigger)
+                # Extract trigger conditions solving and comparing constraints into trigger states
+                trigger.load_conditions()
 
-            # ! There shouldn't be duplicates in the conditions, which should be parsed before -- just cleaning for demo here
-            print(set(frozenset(v[1].items())
+                # ! There shouldn't be duplicates in the conditions, which should be parsed before -- just cleaning for demo here
+                print(set(frozenset(v[1].items())
                       for v in trigger.conditions.items()))
+            except SymbaMissingSource:
+                continue

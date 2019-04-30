@@ -66,7 +66,7 @@ class TriggerSource(object):
         for s in self._states:
             cvars = self._get_constrained(s)
             for name, sym in cvars.items():
-                self._conditions[s][name] = s.solver.eval(sym)
+                self._conditions[s][name] = s.solver.eval(sym, cast_to=bytes)
 
 
 malware_source_config = []
