@@ -1,0 +1,84 @@
+{
+  "functions": [
+    {
+      "name": "GetDiskFreeSpaceExA",
+      "params": [
+        {
+          "type": "LPCSTR",
+          "name": "lpDirectoryName",
+          "inject": false,
+          "length": "<DEFAULT>"
+        },
+        {
+          "type": "PULARGE_INTEGER",
+          "name": "lpFreeBytesAvailableToCaller",
+          "inject": false,
+          "length": "<DEFAULT>"
+        },
+        {
+          "type": "PULARGE_INTEGER",
+          "name": "lpTotalNumberOfBytes",
+          "inject": false,
+          "length": "<DEFAULT>"
+        },
+        {
+          "type": "PULARGE_INTEGER",
+          "name": "lpTotalNumberOfFreeBytes",
+          "inject": false,
+          "length": "<DEFAULT>"
+        }
+      ]
+    },
+    {
+      "name": "GetModuleFileNameA",
+      "params": [
+        {
+          "type": "HMODULE",
+          "name": "hModule",
+          "inject": false,
+          "length": "<DEFAULT>"
+        },
+        {
+          "type": "LPSTR",
+          "name": "lpFilename",
+          "inject": false,
+          "length": "<DEFAULT>"
+        },
+        {
+          "type": "DWORD",
+          "name": "nSize",
+          "inject": false,
+          "length": "<DEFAULT>"
+        }
+      ]
+    },
+    {
+      "name": "GetSystemTime",
+      "params": [
+        {
+          "type": "LPSYSTEMTIME",
+          "name": "lpSystemTime",
+          "inject": false,
+          "length": "<DEFAULT>"
+        }
+      ]
+    },
+    {
+      "name": "GetUserNameA",
+      "params": [
+        {
+          "type": "LPSTR",
+          "name": "lpBuffer",
+          "inject": false,
+          "length": "<DEFAULT>"
+        },
+        {
+          "type": "LPDWORD",
+          "name": "pcbBuffer",
+          "inject": false,
+          "length": "<DEFAULT>"
+        }
+      ]
+    }
+  ]
+}

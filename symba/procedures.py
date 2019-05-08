@@ -52,13 +52,13 @@ class GetSystemTime(SimProcedure):
 
 @register_source('malware')
 class GetUserNameA(SimProcedure):
-    def __init__(self):
-        self.os_arch = Win32()
-        super().__init__()
-
     def run(self, lpBuffer, pcbBuffer):
-        name_symbol = claripy.BVS("username",
-                                  8 * self.state.mem[pcbBuffer].dword.concrete)
+        name_symbol = self.state.solver.BVS(
+            name="username",
+            size=8 * self.state.mem[pcbBuffer].dword.concrete,
+            key=('prova', 0x1),
+            eternal=True)
+
         self.state.memory.store(lpBuffer, name_symbol)
 
         self.state.globals['GetUserNameA'] = {}
@@ -71,4 +71,3 @@ class GetUserNameA(SimProcedure):
 # GetModuleFileName
 # DeviceIoControl (for disk size)
 # GetDiskFreeSpaceExA
-# GetModuleHandle
