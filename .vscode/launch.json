@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/run.py",
             "args": [
-                "/home/symba/dev/symba/resources/malwares/wrathrage/bin/runner.exe"
+                "/home/symba/dev/symba/resources/pocs/simple_username/bin/runner.exe"
             ],
             "console": "integratedTerminal"
         },

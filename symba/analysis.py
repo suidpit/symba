@@ -1,4 +1,6 @@
 import logging
+
+from pprint import pprint, pformat
 from typing import List, Dict
 
 from angr import Project, SimState
@@ -11,7 +13,9 @@ from symba.exceptions import SymbaMissingSource
 
 
 class Symba(object):
-    def __init__(self, binary: str, angr_options: dict = {'auto_load_libs': False}):
+    def __init__(self,
+                 binary: str,
+                 angr_options: dict = {'auto_load_libs': False}):
         self._binary = binary
         self._angr_options = angr_options
 
@@ -26,8 +30,7 @@ class Symba(object):
         self.l: logging.Logger = logging.getLogger("symba.analysis")
 
     def _init_angr_project(self):
-        self.project = Project(
-            self._binary, load_options=self._angr_options)
+        self.project = Project(self._binary, load_options=self._angr_options)
 
     def _register_triggers(self, config):
         # TODO: Just a placeholder for future
@@ -37,7 +40,10 @@ class Symba(object):
                 source.model = source.model[0]
                 self.triggers.append(source)
 
-    def find_calling_points(self, symbols: List[str] = [], cfg_options: dict = {'show_progressbar': True}) -> List[Dict[str, int]]:
+    def find_calling_points(self,
+                            symbols: List[str] = [],
+                            cfg_options: dict = {'show_progressbar': True}
+                            ) -> List[Dict[str, int]]:
         """For each symbol in input - or for every symbol, if no specified - retrieves addresses of basic blocks
         calling that symbol.
         Several techniques can be used to obtain the former. At the moment, the function generates a static CFG starting
@@ -62,8 +68,9 @@ class Symba(object):
                 try:
                     if function.name in symbols or not symbols:
                         pred = next(
-                            iter(self.cfg.functions.callgraph.predecessors(address))
-                        )
+                            iter(
+                                self.cfg.functions.callgraph.predecessors(
+                                    address)))
                         call_points[function.name] = pred
                 except StopIteration:
                     # some nodes won't have predecessors - obv - do not panic.
@@ -129,7 +136,12 @@ class Symba(object):
                 trigger.load_conditions()
 
                 # ! There shouldn't be duplicates in the conditions, which should be parsed before -- just cleaning for demo here
-                print(set(frozenset(v[1].items())
-                      for v in trigger.conditions.items()))
+                # ! Define where to print, now this is just throwing output in logs.
+                with open("out.log", 'w') as f:
+                    f.write(
+                        pformat(set(
+                            frozenset(v[1].items())
+                            for v in trigger.conditions.items())))
+                    f.write('\n')
             except SymbaMissingSource:
                 continue
