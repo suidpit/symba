@@ -1,3 +1,4 @@
+from symba.configuration import SymbaConfig
 from symba import analysis
 from sys import argv
 

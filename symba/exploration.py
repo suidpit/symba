@@ -12,7 +12,7 @@ class TriggerSeer(ExplorationTechnique):
     the exploration is completed.
     The rationale behind so is that, once
     a value is produced from a source, the
-    relative triggerconditions
+    relative trigger conditions
     will be computed shortly thereafter.
     """
 
@@ -28,7 +28,7 @@ class TriggerSeer(ExplorationTechnique):
         if not self.trigger in state.globals:
             # If trigger has not been injected, yet,
             # return true, so that exploration continues.
-            # but as soon as one state gets its injection,
+            # As soon as one state gets its injection,
             # we expect that at least 1 state among the actives
             # contains a new constraint, to continue exploration.
             return self._not_injected
