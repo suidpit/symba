@@ -6,16 +6,6 @@ from angr import SimProcedure, SimState
 from claripy import BV
 
 
-class TriggerCondition(object):
-    """
-    Class representing a trigger condition. What does it contain? A given environment
-    or context variable which can represent some triggering fact.
-    """
-
-
-# ? Should this extend SimProcedure?
-
-
 class TriggerSource(object):
     """
     Base class for trigger-condition sources.
@@ -23,10 +13,9 @@ class TriggerSource(object):
 
     def __init__(self, symbol: str, model: SimProcedure):
         self.symbol = symbol
-        self.model = model,
-        self._constrained = []
-        self._states = []
-        self._conditions = defaultdict(dict)
+        self.model = model
+        self.states = []
+        self.conditions = defaultdict(dict)
 
     def _is_constrained(self, bv: BV, state: SimState):
         return any(not bv.variables.isdisjoint(constraint.variables)
@@ -54,24 +43,15 @@ class TriggerSource(object):
             self._is_constrained(variable, state)
             for variable in state.globals[self.symbol].values())
 
-    @property
-    def states(self):
-        return self._states
-
-    @property
-    def conditions(self):
-        return self._conditions
-
+    #! This MUST DISAPPEAR
     def load_conditions(self):
-        for s in self._states:
+        for s in self.states:
             cvars = self._get_constrained(s)
             for name, sym in cvars.items():
-                self._conditions[s][name] = s.solver.eval(sym, cast_to=bytes)
+                self.conditions[s][name] = s.solver.eval(sym, cast_to=bytes)
 
 
 malware_source_config = []
-
-# * Right now, multiple config functionality is not implemented. Default configuration remains malware.
 
 
 def register_source(config: str):

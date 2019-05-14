@@ -19,7 +19,8 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "externalTerminal"
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/symba"
         },
         {
             "name": "Python: Remote Attach",

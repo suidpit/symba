@@ -6,6 +6,7 @@ from typing import List, Dict
 from angr import Project, SimState
 from angr.analyses.cfg.cfg import CFG
 
+from symba.configuration import SymbaConfig
 from symba.triggers import TriggerSource, malware_source_config
 from symba.procedures import GetSystemTime
 from symba.exploration import TriggerSeer
@@ -15,16 +16,20 @@ from symba.exceptions import SymbaMissingSource
 class Symba(object):
     def __init__(self,
                  binary: str,
+                 config_paths: List[str] = ['malware.json'],
                  angr_options: dict = {'auto_load_libs': False}):
         self._binary = binary
         self._angr_options = angr_options
-
-        self._init_logging()
-        self._init_angr_project()
+        self._config_paths = config_paths
 
         # The first time I generate a CFG, I save it for performance purpose.
         self.cfg = None
         self.triggers = []
+
+        self._init_logging()
+        self._init_angr_project()
+        self._init_configuration()
+        pass
 
     def _init_logging(self):
         self.l: logging.Logger = logging.getLogger("symba.analysis")
@@ -32,6 +37,12 @@ class Symba(object):
     def _init_angr_project(self):
         self.project = Project(self._binary, load_options=self._angr_options)
 
+    def _init_configuration(self):
+        for config in self._config_paths:
+            for model in SymbaConfig(config).models:
+                self.triggers.append(TriggerSource(model.name, model))
+
+    """
     def _register_triggers(self, config):
         # TODO: Just a placeholder for future
         if "malware" in config:
@@ -39,6 +50,7 @@ class Symba(object):
                 #! Fixing a strange bug in decorator which returns a tuple instead of class
                 source.model = source.model[0]
                 self.triggers.append(source)
+    """
 
     def find_calling_points(self,
                             symbols: List[str] = [],
@@ -107,8 +119,6 @@ class Symba(object):
         # Initialize a simulation manager. For now, no technique is used.
         sm = self.project.factory.simulation_manager(start_state)
 
-        # The only termination criterion, right now, is -- up to the end.
-        # TODO: Implement an exploration technique to stop exploration after trigger conditions have been triggered.
         sm.use_technique(TriggerSeer(trigger.symbol))
 
         sm.run()
@@ -117,17 +127,15 @@ class Symba(object):
             if trigger.is_triggered(state):
                 trigger.states.append(state)
 
-    def analyse(self, source_configs: List[str] = ["malware"]):
+    def analyse(self):
         """Handles the executable analysis pipeline, starts variable tracking,
         and extracts from symbolic states trigger conditions passed from configuration.
         If no configuration is specified, Symba will load a default configuration
         with Trigger Sources typically found in malware analysis.
-
-        Keyword Arguments:
-            source_configs {List[str]} - - A list of TriggerSource objects to direct analysis (default: {["malware"]})
         """
-
+        """
         self._register_triggers(source_configs)
+        """
         for trigger in self.triggers:
             try:
                 # ? How to handle multiple triggers in the same symbolic execution reusing work already done?
