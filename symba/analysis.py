@@ -40,7 +40,7 @@ class Symba(object):
     def _init_configuration(self):
         for config in self._config_paths:
             for model in SymbaConfig(config).models:
-                self.triggers.append(TriggerSource(model.name, model))
+                self.triggers.append(TriggerSource(model))
 
     """
     def _register_triggers(self, config):
@@ -103,24 +103,24 @@ class Symba(object):
         """
 
         # Which block is calling this function?
-        res = self.find_calling_points([trigger.symbol])
+        res = self.find_calling_points([trigger.name])
 
         # If there is no calling point, the function won't be called in binary.
         if not res:
             raise SymbaMissingSource
 
         # Replace Win32 Library with our function summary.
-        self.project.hook_symbol(trigger.symbol, trigger.model)
+        self.project.hook_symbol(trigger.name, trigger.model)
 
         # I am assuming just one starting block, for now.
-        call_addr = res[trigger.symbol]
+        call_addr = res[trigger.name]
         b = self.project.factory.block(addr=call_addr)
         # Set symbolic execution start to block calling trigger symbol
         start_state = self.project.factory.entry_state(addr=b.addr)
         # Initialize a simulation manager. For now, no technique is used.
         sm = self.project.factory.simulation_manager(start_state)
 
-        sm.use_technique(TriggerSeer(trigger.symbol))
+        sm.use_technique(TriggerSeer(trigger.name))
 
         sm.run()
 
@@ -146,6 +146,7 @@ class Symba(object):
 
                 # ! There shouldn't be duplicates in the conditions, which should be parsed before -- just cleaning for demo here
                 # ! Define where to print, now this is just throwing output in logs.
+                # TODO: Implement clean() and format() on TriggerCondition
                 with open("out.log", 'w') as f:
                     f.write(
                         pformat(set(

@@ -25,18 +25,22 @@ class TriggerSeer(ExplorationTechnique):
         self._not_injected = True
 
     def _recently_constrained(self, state):
-        if not self.trigger in state.globals:
+        cfg = self.trigger.model.config
+        name = self.trigger.name
+
+        if not state.solver.get_variables((cfg, name)):
             # If trigger has not been injected, yet,
             # return true, so that exploration continues.
             # As soon as one state gets its injection,
             # we expect that at least 1 state among the actives
-            # contains a new constraint, to continue exploration.
+            # contains a new constraint to continue exploration.
             return self._not_injected
-        self._not_injected = True
+
+        self._not_injected = False
 
         collected_constraints = set()
 
-        for bv in state.globals[self.trigger].values():
+        for _, bv in state.solver.get_variables((cfg, name)):
             collected_constraints |= set(
                 (constraint for constraint in state.solver.constraints
                  if not bv.variables.isdisjoint(constraint.variables)))

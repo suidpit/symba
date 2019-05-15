@@ -30,25 +30,24 @@ class GenericModel(SimProcedure):
             p.name, inspect.Parameter.POSITIONAL_OR_KEYWORD) for p in fsig.params]
         self._default_len = default_len
 
-        self.run = lambda *args: GenericModel.run(self, *args)
-        self.run.__signature__ = inspect.Signature(self.params)
         super().__init__(num_args=len(self.params))
+        pass
 
     # angr asks, we please him.
     def run(self, *args):  # pylint: disable=method-hidden
-        inspect.signature(self.run).bind(*args)
+        # inspect.signature(self.run).bind(*args)
         params = self.fsig.params
         # Symbol Injection process
         for i, param in enumerate(params):
             if param.inject:
-                if param.length == '<DEFAULT>':
-                    param.length = self._default_len
+                # TODO: Model ARCH object to store these values (length, endianness)
+                l = self._default_len if param.length == '<DEFAULT>' else param.length
                 symbol = self.state.solver.BVS(
                     param.name,
-                    param.length * 8,
+                    l * 8,
                     key=(self.config, self.name, param.name),
                     eternal=True
                 )
                 # Order of params is quite important here!
                 self.state.memory.store(
-                    args[i], symbol, endness=self.project.arch.memory_endness)
+                    args[i], symbol, endness='Iend_BE' if "STR" in param.type else 'Iend_LE')

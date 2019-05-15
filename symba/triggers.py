@@ -11,11 +11,11 @@ class TriggerSource(object):
     Base class for trigger-condition sources.
     """
 
-    def __init__(self, symbol: str, model: SimProcedure):
-        self.symbol = symbol
+    def __init__(self, model: SimProcedure):
         self.model = model
+        self.name = model.name
         # Our state-plugin, state-globals free list storing symbol keys
-        self._keys = [(model.config_name, model.name, param.name) for param in model.fsig.params if param.inject]
+        self._keys = [(model.config, model.name, param.name) for param in model.fsig.params if param.inject]
         self.states = []
         self.conditions = defaultdict(dict)
 
@@ -28,7 +28,7 @@ class TriggerSource(object):
         # We need an explicit mapping between symbol and name that the API will expect to solve symbol.
         rets = {}
         # Iterate over every variable injected by trigger sources in each state
-        for key, symbol in state.solver.get_variables():
+        for key, symbol in state.solver.get_variables(self.model.config):
             if self._is_constrained(symbol, state):
                 rets[key] = symbol
         return rets
@@ -46,6 +46,7 @@ class TriggerSource(object):
             for variable in state.solver.get_variables())
 
     #! This MUST DISAPPEAR
+    # TODO: Make it disappear through a brand new TriggerCondition class :)
     def load_conditions(self):
         for s in self.states:
             cvars = self._get_constrained(s)
@@ -56,6 +57,7 @@ class TriggerSource(object):
 malware_source_config = []
 
 
+# TODO: adapt this to the new configuration mechanism
 def register_source(config: str):
     """
     Registers a new TriggerSource into malware config sources.
@@ -65,7 +67,7 @@ def register_source(config: str):
         if config == "malware":
             sim_proc = func()
             malware_source_config.append(
-                TriggerSource(sim_proc.__class__.__name__, sim_proc))
+                TriggerSource(sim_proc))
         return sim_proc
 
     return wrapper

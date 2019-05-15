@@ -16,7 +16,7 @@ int main() {
 
     printf("You are %s, aren't you?\n", username);
 
-    if (strncmp(username, "PIETRO", 6) != 0) {
+    if (strncmp(username, "PIETRO", 7) != 0) {
         exit(-1);
     }
 
