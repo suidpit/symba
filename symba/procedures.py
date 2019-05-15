@@ -5,7 +5,7 @@ from angr import SimProcedure
 
 from symba.triggers import register_source
 from symba.arch import Win32
-
+"""
 # TODO: automatically generate stub functions from MSDN documentation
 # TODO: Implement a generic class for Win32 API functions
 
@@ -62,3 +62,4 @@ class GetUserNameA(SimProcedure):
         self.state.globals['GetUserNameA'] = {}
         self.state.globals['GetUserNameA']['username'] = name_symbol
         return
+"""

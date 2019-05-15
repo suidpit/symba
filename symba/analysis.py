@@ -8,7 +8,6 @@ from angr.analyses.cfg.cfg import CFG
 
 from symba.configuration import SymbaConfig
 from symba.triggers import TriggerSource, malware_source_config
-from symba.procedures import GetSystemTime
 from symba.exploration import TriggerSeer
 from symba.exceptions import SymbaMissingSource
 
@@ -33,6 +32,7 @@ class Symba(object):
 
     def _init_logging(self):
         self.l: logging.Logger = logging.getLogger("symba.analysis")
+        self.l.setLevel(logging.INFO)
 
     def _init_angr_project(self):
         self.project = Project(self._binary, load_options=self._angr_options)
@@ -79,6 +79,7 @@ class Symba(object):
                 self.l.debug((address, function.name))
                 try:
                     if function.name in symbols or not symbols:
+                        self.l.info(f"Intercepted call to {function.name}")
                         pred = next(
                             iter(
                                 self.cfg.functions.callgraph.predecessors(

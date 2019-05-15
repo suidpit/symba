@@ -2,8 +2,8 @@ from IPython import embed
 """
 A brand new class which is
 so interesting: it represents
-a TriggerSource, and it EXTENDS
-SimProcedures! So cool so sexy.
+what we GENERICALLY do
+with functions to inject!
 """
 import inspect
 
@@ -22,9 +22,10 @@ class GenericModel(SimProcedure):
     standard, accordingly.
     """
 
-    def __init__(self, fsig, default_len=32):
+    def __init__(self, fsig, config_name, default_len=32):
         self.fsig = fsig
         self.name = fsig.name
+        self.config = config_name
         self.params = [inspect.Parameter(
             p.name, inspect.Parameter.POSITIONAL_OR_KEYWORD) for p in fsig.params]
         self._default_len = default_len
@@ -43,5 +44,11 @@ class GenericModel(SimProcedure):
                 if param.length == '<DEFAULT>':
                     param.length = self._default_len
                 symbol = self.state.solver.BVS(
-                    param.name, param.length * 8)
-                self.state.memory.store(args[i], symbol)
+                    param.name,
+                    param.length * 8,
+                    key=(self.config, self.name, param.name),
+                    eternal=True
+                )
+                # Order of params is quite important here!
+                self.state.memory.store(
+                    args[i], symbol, endness=self.project.arch.memory_endness)

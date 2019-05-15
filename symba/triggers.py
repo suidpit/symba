@@ -14,6 +14,8 @@ class TriggerSource(object):
     def __init__(self, symbol: str, model: SimProcedure):
         self.symbol = symbol
         self.model = model
+        # Our state-plugin, state-globals free list storing symbol keys
+        self._keys = [(model.config_name, model.name, param.name) for param in model.fsig.params if param.inject]
         self.states = []
         self.conditions = defaultdict(dict)
 
@@ -26,9 +28,9 @@ class TriggerSource(object):
         # We need an explicit mapping between symbol and name that the API will expect to solve symbol.
         rets = {}
         # Iterate over every variable injected by trigger sources in each state
-        for name, var in state.globals[self.symbol].items():
-            if self._is_constrained(var, state):
-                rets[name] = var
+        for key, symbol in state.solver.get_variables():
+            if self._is_constrained(symbol, state):
+                rets[key] = symbol
         return rets
 
     # ? Is this really useful for performances?
@@ -40,8 +42,8 @@ class TriggerSource(object):
         # * Right now, this is obtained by scanning the list
         # * of constraints looking for injected symbols appearing there.
         return any(
-            self._is_constrained(variable, state)
-            for variable in state.globals[self.symbol].values())
+            self._is_constrained(variable[1], state)
+            for variable in state.solver.get_variables())
 
     #! This MUST DISAPPEAR
     def load_conditions(self):
@@ -55,7 +57,8 @@ malware_source_config = []
 
 
 def register_source(config: str):
-    """ Registers a new TriggerSource into malware config sources.
+    """
+    Registers a new TriggerSource into malware config sources.
     """
 
     def wrapper(func):

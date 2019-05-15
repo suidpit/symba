@@ -34,7 +34,7 @@ class SymbaConfig(object):
         self._parse_json()
 
         for sig in self.signatures:
-            self.models.append(GenericModel(sig))
+            self.models.append(GenericModel(sig, self.config_file))
 
     def _parse_json(self):
         with open(self.config_file, 'r') as f:
