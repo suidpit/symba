@@ -28,7 +28,7 @@ class TriggerSource(object):
         # We need an explicit mapping between symbol and name that the API will expect to solve symbol.
         rets = {}
         # Iterate over every variable injected by trigger sources in each state
-        for key, symbol in state.solver.get_variables(self.model.config):
+        for key, symbol in state.solver.get_variables(self.model.config, self.model.name):
             if self._is_constrained(symbol, state):
                 rets[key] = symbol
         return rets
@@ -43,7 +43,7 @@ class TriggerSource(object):
         # * of constraints looking for injected symbols appearing there.
         return any(
             self._is_constrained(variable[1], state)
-            for variable in state.solver.get_variables())
+            for variable in state.solver.get_variables(self.model.config, self.model.name))
 
     #! This MUST DISAPPEAR
     # TODO: Make it disappear through a brand new TriggerCondition class :)

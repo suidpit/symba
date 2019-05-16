@@ -120,11 +120,13 @@ class Symba(object):
         # Initialize a simulation manager. For now, no technique is used.
         sm = self.project.factory.simulation_manager(start_state)
 
-        sm.use_technique(TriggerSeer(trigger.name))
+        sm.use_technique(TriggerSeer(
+            (trigger.model.config, trigger.model.name)))
 
         sm.run()
 
-        for state in sm.deadended + sm.active:
+        # TODO: Differentiate trigger conditions on state? Makes sense!
+        for state in sm.deadended + sm.active + sm.unconstrained:
             if trigger.is_triggered(state):
                 trigger.states.append(state)
 
@@ -137,6 +139,7 @@ class Symba(object):
         """
         self._register_triggers(source_configs)
         """
+        brutto_result = ""
         for trigger in self.triggers:
             try:
                 # ? How to handle multiple triggers in the same symbolic execution reusing work already done?
@@ -147,11 +150,10 @@ class Symba(object):
                 # ! There shouldn't be duplicates in the conditions, which should be parsed before -- just cleaning for demo here
                 # ! Define where to print, now this is just throwing output in logs.
                 # TODO: Implement clean() and format() on TriggerCondition
-                with open("out.log", 'w') as f:
-                    f.write(
-                        pformat(set(
-                            frozenset(v[1].items())
-                            for v in trigger.conditions.items())))
-                    f.write('\n')
+                brutto_result += pformat(set(
+                    frozenset(v[1].items())
+                    for v in trigger.conditions.items()))
             except SymbaMissingSource:
                 continue
+        with open("out.log", 'w') as f:
+            f.write(brutto_result + '\n')

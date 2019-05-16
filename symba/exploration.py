@@ -16,19 +16,26 @@ class TriggerSeer(ExplorationTechnique):
     will be computed shortly thereafter.
     """
 
-    def __init__(self, trigger: str, threshold=10):
+    def __init__(self, prefix, threshold=10):
         super(TriggerSeer, self).__init__()
-        self.trigger = trigger
+        self.prefix = prefix
         self._threshold = threshold
         self._count = 0
         self._registry = set()
         self._not_injected = True
 
-    def _recently_constrained(self, state):
-        cfg = self.trigger.model.config
-        name = self.trigger.name
+    def _peek_variables(self, key, state):
+        try:
+            next(state.solver.get_variables(*key))
+        except StopIteration:
+            return False
+        return True
 
-        if not state.solver.get_variables((cfg, name)):
+    def _recently_constrained(self, state):
+        # The key to retrieve variables injected
+        cfg, name = self.prefix
+
+        if not self._peek_variables((cfg, name), state):
             # If trigger has not been injected, yet,
             # return true, so that exploration continues.
             # As soon as one state gets its injection,
@@ -40,7 +47,7 @@ class TriggerSeer(ExplorationTechnique):
 
         collected_constraints = set()
 
-        for _, bv in state.solver.get_variables((cfg, name)):
+        for _, bv in state.solver.get_variables(cfg, name):
             collected_constraints |= set(
                 (constraint for constraint in state.solver.constraints
                  if not bv.variables.isdisjoint(constraint.variables)))
