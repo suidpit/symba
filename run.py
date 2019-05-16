@@ -4,5 +4,5 @@ from sys import argv
 
 symba = analysis.Symba(argv[1])
 
-# Loads symba with analysis information
-symba.analyse()
+# Extract trigger conditions from the executable
+conditions = symba.analyse()

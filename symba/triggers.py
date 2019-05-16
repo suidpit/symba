@@ -45,13 +45,13 @@ class TriggerSource(object):
             self._is_constrained(variable[1], state)
             for variable in state.solver.get_variables(self.model.config, self.model.name))
 
-    #! This MUST DISAPPEAR
-    # TODO: Make it disappear through a brand new TriggerCondition class :)
-    def load_conditions(self):
+    def extract_raw_conditions(self):
+        rets = defaultdict(list)
         for s in self.states:
             cvars = self._get_constrained(s)
-            for name, sym in cvars.items():
-                self.conditions[s][name] = s.solver.eval(sym, cast_to=bytes)
+            for cvar in cvars.items():
+                rets[cvar].append(s)
+        return rets
 
 
 malware_source_config = []

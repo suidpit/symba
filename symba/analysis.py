@@ -6,6 +6,7 @@ from typing import List, Dict
 from angr import Project, SimState
 from angr.analyses.cfg.cfg import CFG
 
+from symba.conditions import TriggerCondition
 from symba.configuration import SymbaConfig
 from symba.triggers import TriggerSource, malware_source_config
 from symba.exploration import TriggerSeer
@@ -130,7 +131,7 @@ class Symba(object):
             if trigger.is_triggered(state):
                 trigger.states.append(state)
 
-    def analyse(self):
+    def analyse(self) -> List[TriggerCondition]:
         """Handles the executable analysis pipeline, starts variable tracking,
         and extracts from symbolic states trigger conditions passed from configuration.
         If no configuration is specified, Symba will load a default configuration
@@ -139,21 +140,20 @@ class Symba(object):
         """
         self._register_triggers(source_configs)
         """
-        brutto_result = ""
+        conditions = []
         for trigger in self.triggers:
             try:
                 # ? How to handle multiple triggers in the same symbolic execution reusing work already done?
                 self.track_variable(trigger)
-                # Extract trigger conditions solving and comparing constraints into trigger states
-                trigger.load_conditions()
 
-                # ! There shouldn't be duplicates in the conditions, which should be parsed before -- just cleaning for demo here
-                # ! Define where to print, now this is just throwing output in logs.
-                # TODO: Implement clean() and format() on TriggerCondition
-                brutto_result += pformat(set(
-                    frozenset(v[1].items())
-                    for v in trigger.conditions.items()))
+                # Extract trigger conditions solving and comparing constraints into trigger states
+                raw_conditions = trigger.extract_raw_conditions()
+
+                # TODO: Handle the case when multiple call to the same function are done
+                # Each variable has (key, symbol) form, and states is a list
+                # of states which have at least one constraint on such variable.
+                for variable, states in raw_conditions.items():
+                    conditions.append(TriggerCondition(variable, states))
             except SymbaMissingSource:
                 continue
-        with open("out.log", 'w') as f:
-            f.write(brutto_result + '\n')
+        return conditions
