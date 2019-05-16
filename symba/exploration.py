@@ -12,31 +12,42 @@ class TriggerSeer(ExplorationTechnique):
     the exploration is completed.
     The rationale behind so is that, once
     a value is produced from a source, the
-    relative triggerconditions
+    relative trigger conditions
     will be computed shortly thereafter.
     """
 
-    def __init__(self, trigger: str, threshold=10):
+    def __init__(self, prefix, threshold=10):
         super(TriggerSeer, self).__init__()
-        self.trigger = trigger
+        self.prefix = prefix
         self._threshold = threshold
         self._count = 0
         self._registry = set()
         self._not_injected = True
 
+    def _peek_variables(self, key, state):
+        try:
+            next(state.solver.get_variables(*key))
+        except StopIteration:
+            return False
+        return True
+
     def _recently_constrained(self, state):
-        if not self.trigger in state.globals:
+        # The key to retrieve variables injected
+        cfg, name = self.prefix
+
+        if not self._peek_variables((cfg, name), state):
             # If trigger has not been injected, yet,
             # return true, so that exploration continues.
-            # but as soon as one state gets its injection,
+            # As soon as one state gets its injection,
             # we expect that at least 1 state among the actives
-            # contains a new constraint, to continue exploration.
+            # contains a new constraint to continue exploration.
             return self._not_injected
-        self._not_injected = True
+
+        self._not_injected = False
 
         collected_constraints = set()
 
-        for bv in state.globals[self.trigger].values():
+        for _, bv in state.solver.get_variables(cfg, name):
             collected_constraints |= set(
                 (constraint for constraint in state.solver.constraints
                  if not bv.variables.isdisjoint(constraint.variables)))

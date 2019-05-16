@@ -1,0 +1,4 @@
+https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getdiskfreespaceexa
+https://docs.microsoft.com/en-us/windows/desktop/api/libloaderapi/nf-libloaderapi-getmodulefilenamea
+https://docs.microsoft.com/en-us/windows/desktop/api/sysinfoapi/nf-sysinfoapi-getsystemtime
+https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-getusernamea

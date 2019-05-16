@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/run.py",
             "args": [
-                "/home/symba/dev/symba/resources/malwares/wrathrage/bin/runner.exe"
+                "/home/symba/dev/symba/resources/malwares/pafish/pafish.exe"
             ],
             "console": "integratedTerminal"
         },
@@ -19,7 +19,8 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "externalTerminal"
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/symba"
         },
         {
             "name": "Python: Remote Attach",
