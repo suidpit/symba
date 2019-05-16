@@ -47,7 +47,6 @@ class GetSystemTime(SimProcedure):
         )
         return
 
-@register_source('malware')
 class GetUsername(SimProcedure):
     def __init__(self):
         self.os_arch = Win32()

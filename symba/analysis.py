@@ -95,7 +95,6 @@ class Symba(object):
         sm = self.project.factory.simulation_manager(start_state)
 
         # The only termination criterion, right now, is -- up to the end.
-        # TODO: Implement an exploration technique to stop exploration after trigger conditions have been triggered.
         sm.use_technique(TriggerSeer(trigger.symbol))
 
         sm.run()
