@@ -354,3 +354,4 @@ MigrationBackup/
 # Author Integrations
 
 .vscode/ipch
+papers/**
